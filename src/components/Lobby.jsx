@@ -19,7 +19,7 @@ export default function Lobby({ roomCode, players, isHost }) {
             </div>
 
             <div className="glass-panel">
-                <h3 style={{ marginBottom: '1rem' }}>Jugadores ({players.length})</h3>
+                <h3 style={{ marginBottom: '1rem' }}>Jugadoress ({players.length})</h3>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                     {players.map(p => (
                         <span key={p.id} style={{
