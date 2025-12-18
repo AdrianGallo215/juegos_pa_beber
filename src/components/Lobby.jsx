@@ -13,9 +13,9 @@ export default function Lobby({ roomCode, players, isHost }) {
 
             <div className="card" style={{ textAlign: 'center', marginBottom: '1rem' }}>
                 <div style={{ background: 'white', padding: '1rem', display: 'inline-block', borderRadius: '1rem', marginBottom: '1rem' }}>
-                    <QRCodeCanvas value={`http://local-ip-or-host:5173/?room=${roomCode}`} size={160} />
+                    <QRCodeCanvas value={`${window.location.origin}/?room=${roomCode}`} size={160} />
                 </div>
-                <p className="text-muted">Escanea para unirte (Si estás en la misma red)</p>
+                <p className="text-muted">Escanea para unirte</p>
             </div>
 
             <div className="glass-panel">

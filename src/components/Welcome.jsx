@@ -55,7 +55,7 @@ export default function Welcome({ onJoin }) {
                                 placeholder="ABCD"
                                 value={roomCode}
                                 onChange={e => setRoomCode(e.target.value)}
-                                maxLength={4}
+                                maxLength={5}
                             />
                         </div>
                         <div className="grid-cols-2">
