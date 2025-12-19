@@ -6,6 +6,7 @@ import Lobby from './components/Lobby';
 import GameBoard from './components/GameBoard';
 import VotingPhase from './components/VotingPhase';
 import Scoreboard from './components/Scoreboard';
+import PlayerSummary from './components/PlayerSummary';
 
 // Helper for session
 function getSession() {
@@ -28,6 +29,7 @@ function App() {
 
   const [roundData, setRoundData] = useState(null);
   const [votingData, setVotingData] = useState(null);
+  const [interimResult, setInterimResult] = useState(null); // For PlayerSummary
   const [leaderboard, setLeaderboard] = useState([]);
   const [isGameOver, setIsGameOver] = useState(false);
   const [gameCategories, setGameCategories] = useState([]);
@@ -122,6 +124,11 @@ function App() {
       setView('VOTING');
     });
 
+    socket.on('player_round_total', (data) => {
+      setInterimResult(data);
+      setView('INTERIM_RESULTS');
+    });
+
     socket.on('game_reset', ({ players }) => {
       // Reset local state to Lobby
       setPlayers(players);
@@ -137,7 +144,7 @@ function App() {
       setIsGameOver(isGameOver);
 
       // Pass extra data for Scoreboard
-      // Note: roundData might have outdated categories if new ones generated? 
+      // Note: roundData might have outdated categories if new ones generated?
       // Better to use passed categories or keep current.
       // We'll store it in a temp state or pass directly via props if View updates
       setRoundData(prev => ({ ...prev, details: roundDetails, categoriesOverride: categories }));
@@ -154,6 +161,7 @@ function App() {
       socket.off('start_voting_phase');
       socket.off('round_ended');
       socket.off('game_reset');
+      socket.off('player_round_total');
     };
   }, []);
 
@@ -187,8 +195,11 @@ function App() {
         targetPlayer={votingData ? votingData.targetPlayer : {}}
         answers={votingData ? votingData.answers : {}}
         categories={gameCategories}
-      // We need roundData for context if needed, but VotingPhase props usually sufficient
+        letter={roundData ? roundData.letter : ''}
       />;
+      break;
+    case 'INTERIM_RESULTS':
+      content = <PlayerSummary data={interimResult} />;
       break;
     case 'RESULTS':
       content = <Scoreboard
@@ -197,7 +208,7 @@ function App() {
         roomCode={roomCode}
         isGameOver={isGameOver}
         roundDetails={roundData ? roundData.details : []}
-        categories={gameCategories}
+        categories={roundData && roundData.categoriesOverride ? roundData.categoriesOverride : gameCategories}
         onLeave={handleLeave}
       />;
       break;

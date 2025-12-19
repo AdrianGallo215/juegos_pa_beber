@@ -9,37 +9,49 @@ function getMyId() {
     } catch { return null; }
 }
 
-export default function VotingPhase({ roomCode, targetPlayer, answers, categories }) {
+export default function VotingPhase({ roomCode, targetPlayer, answers, categories, letter }) {
     const [votes, setVotes] = useState({});
+    const [progress, setProgress] = useState(null); // { voters: [], totalNeeded: 0 }
     const myId = getMyId();
     const isTargetMe = targetPlayer.id === myId;
+    const [hasVoted, setHasVoted] = useState(false);
 
     useEffect(() => {
-        // Reset votes when target player changes
-        // If it's me, I don't vote (or it's read-only)
+        // Listen for progress
+        const onProgress = (data) => setProgress(data);
+        socket.on('voting_progress', onProgress);
+        return () => socket.off('voting_progress', onProgress);
+    }, []);
+
+    useEffect(() => {
+        // Reset logic when target changes
         const init = {};
-        categories.forEach(c => init[c] = true); // Default to VALID (True)
+        categories.forEach(c => {
+            const word = answers[c] || '';
+            // Auto-validate based on letter (case insensitive)
+            const isValidStart = word.trim().toUpperCase().startsWith(letter.toUpperCase());
+            init[c] = isValidStart;
+        });
         setVotes(init);
-    }, [targetPlayer, categories]);
+        setHasVoted(false);
+        setProgress(null);
+    }, [targetPlayer, categories, letter, answers]);
 
     const toggleVote = (cat) => {
-        if (isTargetMe) return; // Disable toggling for self
+        if (isTargetMe || hasVoted) return;
         setVotes(prev => ({ ...prev, [cat]: !prev[cat] }));
     };
 
     const submitVotes = () => {
-        // Logic for self: Send empty or all-true? 
-        // Server ignores self-votes for tally, but needs the event to progress.
-        // So we send whatever.
         socket.emit('submit_votes', { code: roomCode, targetPlayerId: targetPlayer.id, votes });
+        setHasVoted(true);
     };
 
     return (
         <div className="container animate-fade-in">
             <h2 className="title" style={{ fontSize: '2rem' }}>Revisando: {targetPlayer.name} {isTargetMe ? '(Tú)' : ''}</h2>
-            {isTargetMe && <p className="text-muted" style={{ textAlign: 'center', marginBottom: '1rem' }}>Espera a que los demás voten tus respuestas</p>}
 
-            <div className="card" style={{ maxHeight: '65vh', overflowY: 'auto' }}>
+            <div className="card" style={{ maxHeight: '55vh', overflowY: 'auto' }}>
                 {categories.map(cat => (
                     <div key={cat}
                         onClick={() => toggleVote(cat)}
@@ -52,8 +64,8 @@ export default function VotingPhase({ roomCode, targetPlayer, answers, categorie
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
-                            cursor: isTargetMe ? 'default' : 'pointer',
-                            opacity: isTargetMe ? 0.8 : 1
+                            cursor: (isTargetMe || hasVoted) ? 'default' : 'pointer',
+                            opacity: (isTargetMe || hasVoted) ? 0.8 : 1
                         }}>
                         <div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{cat}</div>
@@ -71,11 +83,19 @@ export default function VotingPhase({ roomCode, targetPlayer, answers, categorie
                 ))}
             </div>
 
-            <div style={{ marginTop: '1rem' }}>
-                {/* Always show button to "confirm" and wait */}
-                <button className="btn-primary" onClick={submitVotes}>
-                    {isTargetMe ? 'Continuar' : 'Confirmar Votos'}
-                </button>
+            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                {!isTargetMe && !hasVoted && (
+                    <button className="btn-primary" onClick={submitVotes}>
+                        Confirmar Votos
+                    </button>
+                )}
+
+                {(isTargetMe || hasVoted) && (
+                    <div className="text-muted" style={{ fontStyle: 'italic' }}>
+                        Esperando a los demás...
+                        {progress && ` (${progress.voters.length}/${progress.totalNeeded})`}
+                    </div>
+                )}
             </div>
         </div>
     );
