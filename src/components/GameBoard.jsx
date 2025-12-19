@@ -1,16 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { socket } from '../socket';
 
-export default function GameBoard({ roomCode, roundData, categories }) {
+export default function GameBoard({ roomCode, roundData, categories, initialAnswers }) {
     const [answers, setAnswers] = useState({});
     const [timeLeft, setTimeLeft] = useState(0);
 
     useEffect(() => {
-        // Initialize answers
-        const init = {};
-        categories.forEach(c => init[c] = '');
-        setAnswers(init);
+        // If we have restored answers (rejoin), use them.
+        if (initialAnswers) {
+            setAnswers(initialAnswers);
+        } else {
+            const init = {};
+            categories.forEach(c => init[c] = '');
+            setAnswers(init);
+        }
+    }, [categories, initialAnswers]); // Only on mount or diff categories
 
+    useEffect(() => {
         // Timer logic
         const interval = setInterval(() => {
             const seconds = Math.floor((roundData.endTime - Date.now()) / 1000);
@@ -21,37 +27,25 @@ export default function GameBoard({ roomCode, roundData, categories }) {
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [roundData, categories]);
+    }, [roundData]);
 
     const handleChange = (cat, val) => {
         setAnswers(prev => ({ ...prev, [cat]: val }));
     };
 
     const handleStop = () => {
-        // Only if all filled? or allow partials? 
-        // Usually STOP requires valid effort.
-        // Let's allow anytime but maybe warn if empty?
-        // Let's just send stop.
         socket.emit('stop_round', { code: roomCode });
-        // Also submit answers immediately just in case
         socket.emit('submit_answers', { code: roomCode, answers });
     };
 
-    // Listen for request_answers in App.jsx usually, 
-    // but if we are mounted, we can listen here?
-    // Better in App.jsx to avoid mounting issues. 
-    // But App.jsx needs access to `answers`.
-    // So we should hoist state to App.jsx OR use a ref/effect here that listens.
-
     useEffect(() => {
-        // Create a listener specific to this component instance
         const submitHandler = () => {
             socket.emit('submit_answers', { code: roomCode, answers });
         };
 
         socket.on('request_answers', submitHandler);
         return () => socket.off('request_answers', submitHandler);
-    }, [answers, roomCode]); // Re-bind when answers change
+    }, [answers, roomCode]);
 
     return (
         <div className="container animate-fade-in">
