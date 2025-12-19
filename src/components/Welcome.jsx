@@ -77,10 +77,10 @@ export default function Welcome({ onSessionSave }) {
 
                 {mode === 'menu' ? (
                     <div className="grid-cols-2">
-                        <button className="btn-primary" onClick={handleCreate}>
-                            Crear Sala
+                        <button className="btn-primary" onClick={handleCreate} disabled={isLoading}>
+                            {isLoading ? 'Creando...' : 'Crear Sala'}
                         </button>
-                        <button className="btn-primary" style={{ backgroundColor: 'var(--secondary-bg)', border: '1px solid var(--primary)' }} onClick={() => setMode('join')}>
+                        <button className="btn-primary" style={{ backgroundColor: 'var(--secondary-bg)', border: '1px solid var(--primary)' }} onClick={() => setMode('join')} disabled={isLoading}>
                             Unirse
                         </button>
                     </div>
@@ -97,8 +97,10 @@ export default function Welcome({ onSessionSave }) {
                             />
                         </div>
                         <div className="grid-cols-2">
-                            <button className="btn-primary" onClick={handleJoin}>Entrar</button>
-                            <button className="btn-danger" onClick={() => setMode('menu')}>Cancelar</button>
+                            <button className="btn-primary" onClick={handleJoin} disabled={isLoading}>
+                                {isLoading ? 'Entrando...' : 'Entrar'}
+                            </button>
+                            <button className="btn-danger" onClick={() => setMode('menu')} disabled={isLoading}>Cancelar</button>
                         </div>
                     </div>
                 )}
