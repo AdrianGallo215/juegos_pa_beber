@@ -122,9 +122,25 @@ function App() {
       setView('VOTING');
     });
 
-    socket.on('round_ended', ({ leaderboard, isGameOver }) => {
+    socket.on('game_reset', ({ players }) => {
+      // Reset local state to Lobby
+      setPlayers(players);
+      setView('LOBBY');
+      setRoundData(null);
+      setVotingData(null);
+      setLeaderboard([]);
+      setIsGameOver(false);
+    });
+
+    socket.on('round_ended', ({ leaderboard, isGameOver, roundDetails, categories }) => {
       setLeaderboard(leaderboard);
       setIsGameOver(isGameOver);
+
+      // Pass extra data for Scoreboard
+      // Note: roundData might have outdated categories if new ones generated? 
+      // Better to use passed categories or keep current.
+      // We'll store it in a temp state or pass directly via props if View updates
+      setRoundData(prev => ({ ...prev, details: roundDetails, categoriesOverride: categories }));
       setView('RESULTS');
     });
 
@@ -137,8 +153,14 @@ function App() {
       socket.off('round_started');
       socket.off('start_voting_phase');
       socket.off('round_ended');
+      socket.off('game_reset');
     };
   }, []);
+
+  const handleLeave = () => {
+    localStorage.removeItem('tuttifruti_session');
+    window.location.href = '/'; // Full reload to clear memory
+  };
 
   let content;
   switch (view) {
@@ -169,7 +191,15 @@ function App() {
       />;
       break;
     case 'RESULTS':
-      content = <Scoreboard leaderboard={leaderboard} isHost={isHost} roomCode={roomCode} isGameOver={isGameOver} />;
+      content = <Scoreboard
+        leaderboard={leaderboard}
+        isHost={isHost}
+        roomCode={roomCode}
+        isGameOver={isGameOver}
+        roundDetails={roundData ? roundData.details : []}
+        categories={gameCategories}
+        onLeave={handleLeave}
+      />;
       break;
     default:
       content = <Welcome onSessionSave={saveSession} />;
