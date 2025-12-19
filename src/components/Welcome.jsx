@@ -85,14 +85,14 @@ export default function Welcome({ onSessionSave }) {
 
     return (
         <div className="container animate-fade-in">
-            <h1 className="title">TUTTIFRUTI</h1>
+            <h1 className="title" style={{ fontSize: '4rem', transform: 'rotate(-3deg)' }}>¡JUEGOS PA'<br />CHUPAR! 🍻</h1>
 
             <div className="card">
                 <div className="word-input-group">
-                    <label>Tu Nombre</label>
+                    <label>¿Cómo te dicen?</label>
                     <input
                         className="input-field"
-                        placeholder="Ej. Juan Mecánico"
+                        placeholder="Tu apodo aquí..."
                         value={name}
                         onChange={e => setName(e.target.value)}
                     />
@@ -101,33 +101,36 @@ export default function Welcome({ onSessionSave }) {
                 {mode === 'menu' ? (
                     <div className="grid-cols-2">
                         <button className="btn-primary" onClick={handleCreate} disabled={isLoading}>
-                            {isLoading ? 'Creando...' : 'Crear Sala'}
+                            {isLoading ? 'Creando...' : 'Armar la Reu'}
                         </button>
-                        <button className="btn-primary" style={{ backgroundColor: 'var(--secondary-bg)', border: '1px solid var(--primary)' }} onClick={() => setMode('join')} disabled={isLoading}>
-                            Unirse
+                        <button className="btn-primary" style={{ backgroundColor: 'var(--game-blue)' }} onClick={() => setMode('join')} disabled={isLoading}>
+                            Unirse a Juerga
                         </button>
                     </div>
                 ) : (
                     <div className="animate-fade-in">
                         <div className="word-input-group">
-                            <label>Código de Sala</label>
+                            <label>Código de la Reu</label>
                             <input
                                 className="input-field"
                                 placeholder="ABCD"
                                 value={roomCode}
                                 onChange={e => setRoomCode(e.target.value)}
                                 maxLength={5}
+                                style={{ textTransform: 'uppercase', letterSpacing: '5px' }}
                             />
                         </div>
                         <div className="grid-cols-2">
                             <button className="btn-primary" onClick={handleJoin} disabled={isLoading}>
-                                {isLoading ? 'Entrando...' : 'Entrar'}
+                                {isLoading ? 'Entrando...' : '¡A Chupar!'}
                             </button>
                             <button className="btn-danger" onClick={() => setMode('menu')} disabled={isLoading}>Cancelar</button>
                         </div>
                     </div>
                 )}
             </div>
+
+            <p style={{ marginTop: '2rem', opacity: 0.5, fontStyle: 'italic' }}>Recomendado: Jugar con chela en mano 🍺</p>
         </div>
     );
 }
