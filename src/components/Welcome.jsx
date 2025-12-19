@@ -14,15 +14,28 @@ export default function Welcome({ onSessionSave }) {
     const [name, setName] = useState('');
     const [roomCode, setRoomCode] = useState('');
     const [mode, setMode] = useState('menu');
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleCreate = () => {
         if (!name) return alert('Por favor ingresa tu nombre');
+        setIsLoading(true);
         const playerId = generateUUID();
 
         // Save now
-        onSessionSave({ playerId, roomCode: null, playerName: name }); // roomCode unknown yet, will update later? 
+        onSessionSave({ playerId, roomCode: null, playerName: name }); // roomCode unknown yet, will update later?
         // Actually, we can't save roomCode until we get it.
         // But we need to send playerId.
+
+        // Timeout check to warn user if server is unreachable
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+            alert('Error: No se recibió respuesta del servidor. \n1. Verifica que el servidor esté encendido. \n2. Si estás en Vercel, revisa que la variable VITE_API_URL sea correcta.');
+        }, 5000);
+
+        // One-time listeners to clear loading state
+        const clear = () => { clearTimeout(timer); setIsLoading(false); };
+        socket.once('room_created', clear);
+        socket.once('error', (err) => { clear(); alert(err.message); });
 
         socket.connect();
         // We listen to room_created in App.jsx, but we need to intercept to save session fully
@@ -53,8 +66,18 @@ export default function Welcome({ onSessionSave }) {
 
     const handleJoin = () => {
         if (!name || !roomCode) return alert('Completa los campos');
+        setIsLoading(true);
         const pid = generateUUID();
         localStorage.setItem('tuttifruti_temp_name', name);
+
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+            alert('Error: No se pudo entrar a la sala. \nEl servidor puede estar desconectado o el código es incorrecto.');
+        }, 5000);
+
+        const clear = () => { clearTimeout(timer); setIsLoading(false); };
+        socket.once('room_joined', clear);
+        socket.once('error', (err) => { clear(); alert(err.message); });
 
         socket.connect();
         socket.emit('join_room', { code: roomCode.toUpperCase(), playerName: name, playerId: pid });
