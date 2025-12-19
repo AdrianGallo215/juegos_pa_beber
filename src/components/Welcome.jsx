@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { socket } from '../socket';
-import { v4 as uuidv4 } from 'uuid'; // Need to install uuid, or just use Math.random
+
 
 // Simple uuid replacement to avoid installing package if not needed
 function generateUUID() {
